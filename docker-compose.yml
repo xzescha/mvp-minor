@@ -1,0 +1,31 @@
+services:
+  db:
+    image: postgres:17
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=testpass
+      - POSTGRES_DB=postgres
+    container_name: database
+    restart: always
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./internal/db/migrations:/docker-entrypoint-initdb.d/
+
+  bot:
+    build: .
+    environment:
+      TELEGRAM_BOT_TOKEN: "7731904498:AAFi6EBTDehaG3kjDptXAaeaNp2VCVjkL7g"
+      POSTGRES_CONN: "postgres://postgres:testpass@db:5432/postgres?sslmode=disable"
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  pgdata:
